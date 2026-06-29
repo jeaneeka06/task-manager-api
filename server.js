@@ -1,28 +1,39 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
+
+const authRoutes = require('./routes/v1/authRoutes');
+
 const taskRoutes = require('./routes/v1/taskRoutes');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 app.use(express.json());
 
+// Allow requests from your frontend
+app.use(cors({
+    origin: 'http://localhost:5173',
+    methods: 'GET,POST,PUT,DELETE',
+    allowedHeaders: 'Content-Type, Authorization'
+}));
 
 app.get('/', (req, res) => {
     res.json({ status: 'success', message: 'Task Manager API is running' });
 });
 
-
 app.use('/api/v1/tasks', taskRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 
+// 404 handler
 app.use((req, res, next) => {
     const err = new Error(`Route not found: ${req.originalUrl}`);
     err.status = 404;
     next(err);
 });
 
-
+// Global error handler
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
@@ -39,7 +50,6 @@ mongoose
         console.error('MongoDB connection failed:', err.message);
         process.exit(1);
     });
-
 
 mongoose.connection.on('error', (err) => {
     console.error('MongoDB runtime error:', err.message);
